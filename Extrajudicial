@@ -1,5 +1,5 @@
 let
-  Origen = Excel.Workbook(Web.Contents("https://finansustentable-my.sharepoint.com/personal/bc_gael_finsus_mx/Documents/Documentos/AUTO-Cobranza/Copia%20de%20Reportes%20IA.xlsx"), null, true),
+  Origen = Excel.Workbook(Web.Contents("https://finansustentable.sharepoint.com/sites/Cobranza-Automatizaciones/Documentos%20compartidos/Cruce%20F1-Judicial-Extrajudicial/Reportes.xlsx"), null, true),
   #"Navegación 1" = Origen{[Item = "TablaExtrajudicial", Kind = "Table"]}[Data],
   #"Consultas combinadas" = Table.NestedJoin(#"Navegación 1", {"Referencia Externa"}, TablaF1, {"Referencia Externa"}, "TablaF1", JoinKind.LeftOuter),
   #"TablaF1 expandido" = Table.ExpandTableColumn(#"Consultas combinadas", "TablaF1", {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket"}, {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1"}),
