@@ -1,0 +1,31 @@
+let
+  Origen = Excel.Workbook(Web.Contents("https://finansustentable-my.sharepoint.com/personal/bc_gael_finsus_mx/Documents/Documentos/AUTO-Cobranza/Copia%20de%20Reportes%20IA.xlsx"), null, true),
+  #"Navegación 1" = Origen{[Item = "TablaExtrajudicial", Kind = "Table"]}[Data],
+  #"Consultas combinadas" = Table.NestedJoin(#"Navegación 1", {"Referencia Externa"}, TablaF1, {"Referencia Externa"}, "TablaF1", JoinKind.LeftOuter),
+  #"TablaF1 expandido" = Table.ExpandTableColumn(#"Consultas combinadas", "TablaF1", {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket"}, {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1"}),
+  #"Columnas quitadas" = Table.RemoveColumns(#"TablaF1 expandido", {"exigible oct", "saldo en mora ", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket", "pagos oct", "monto cubierto ", "Cuota Más Antigua"}),
+  #"Columnas reordenadas" = Table.ReorderColumns(#"Columnas quitadas", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
+  #"Columnas con nombre cambiado" = Table.RenameColumns(#"Columnas reordenadas", {{"Total Vencido", "Exigible este mes"}}),
+  #"Columnas reordenadas 1" = Table.ReorderColumns(#"Columnas con nombre cambiado", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Exigible este mes", "Saldo Mora", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1", "Último Pago", "Monto Pago", "Saldo Total Cuota Más Antigua", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
+  #"Columnas con nombre cambiado 1" = Table.RenameColumns(#"Columnas reordenadas 1", {{"Último Pago", "Pagos este mes"}, {"Monto Pago", "Monto cubierto"}, {"Saldo Total Cuota Más Antigua", "Cuota Más Antigua"}, {"Bucket.1", "Bucket"}, {"Días Mora.1", "Días Mora"}, {"Adeudo Total.1", "Adeudo Total"}, {"Saldo Capital Total.1", "Saldo Capital Total"}}),
+  #"Personalizado agregado" = Table.TransformColumnTypes(Table.AddColumn(#"Columnas con nombre cambiado 1", "Temp_Pagos", each if Date.Month([Pagos este mes]) = Date.Month(DateTime.LocalNow()) 
+   and Date.Year([Pagos este mes]) = Date.Year(DateTime.LocalNow())
+then [Pagos este mes] 
+else null), {{"Temp_Pagos", type date}}),
+  #"Columnas quitadas 1" = Table.RemoveColumns(#"Personalizado agregado", {"Pagos este mes"}),
+  #"Columnas con nombre cambiado 2" = Table.RenameColumns(#"Columnas quitadas 1", {{"Temp_Pagos", "Pagos este mes"}}),
+  #"Columnas reordenadas 2" = Table.ReorderColumns(#"Columnas con nombre cambiado 2", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Exigible este mes", "Saldo Mora", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket", "Pagos este mes", "Monto cubierto", "Cuota Más Antigua", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
+  #"Personalizado agregado 1" = Table.TransformColumnTypes(Table.AddColumn(#"Columnas reordenadas 2", "Temp_Monto", each if Date.Month([Pagos este mes]) = Date.Month(DateTime.LocalNow()) 
+   and Date.Year([Pagos este mes]) = Date.Year(DateTime.LocalNow())
+then [Monto cubierto] 
+else null), {{"Temp_Monto", Currency.Type}}),
+  #"Personalizado agregado 2" = Table.TransformColumnTypes(Table.AddColumn(#"Personalizado agregado 1", "Temp_Cuota", each if Date.Month([Pagos este mes]) = Date.Month(DateTime.LocalNow()) 
+   and Date.Year([Pagos este mes]) = Date.Year(DateTime.LocalNow())
+then [Cuota Más Antigua] 
+else null), {{"Temp_Cuota", Currency.Type}}),
+  #"Columnas quitadas 2" = Table.RemoveColumns(#"Personalizado agregado 2", {"Monto cubierto", "Cuota Más Antigua"}),
+  #"Columnas con nombre cambiado 3" = Table.RenameColumns(#"Columnas quitadas 2", {{"Temp_Monto", "Monto_Cubierto"}, {"Temp_Cuota", "Cuota más Antigua"}}),
+  #"Columnas reordenadas 3" = Table.ReorderColumns(#"Columnas con nombre cambiado 3", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Exigible este mes", "Saldo Mora", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket", "Pagos este mes", "Monto_Cubierto", "Cuota más Antigua", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
+  #"Tipo de columna cambiado" = Table.TransformColumnTypes(#"Columnas reordenadas 3", {{"Exigible este mes", Currency.Type}, {"Saldo Mora", Currency.Type}, {"Saldo Capital Total", Currency.Type}, {"Adeudo Total", Currency.Type}})
+in
+  #"Tipo de columna cambiado"
