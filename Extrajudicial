@@ -1,9 +1,12 @@
 let
-  Origen = Excel.Workbook(Web.Contents("https://finansustentable.sharepoint.com/sites/Cobranza-Automatizaciones/Documentos%20compartidos/Cruce%20F1-Judicial-Extrajudicial/Reportes.xlsx"), null, true),
-  #"Navegación 1" = Origen{[Item = "TablaExtrajudicial", Kind = "Table"]}[Data],
-  #"Consultas combinadas" = Table.NestedJoin(#"Navegación 1", {"Referencia Externa"}, TablaF1, {"Referencia Externa"}, "TablaF1", JoinKind.LeftOuter),
-  #"TablaF1 expandido" = Table.ExpandTableColumn(#"Consultas combinadas", "TablaF1", {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket"}, {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1"}),
-  #"Columnas quitadas" = Table.RemoveColumns(#"TablaF1 expandido", {"exigible oct", "saldo en mora ", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket", "pagos oct", "monto cubierto ", "Cuota Más Antigua"}),
+  Origen = SharePoint.Files("https://finansustentable.sharepoint.com/sites/Cobranza-Automatizaciones", [ApiVersion = 15]),
+  Navegación = Origen{[Name = "Reportes.xlsx", #"Folder Path" = "https://finansustentable.sharepoint.com/sites/Cobranza-Automatizaciones/Documentos compartidos/Cruce F1-Judicial-Extrajudicial/"]}[Content],
+  #"Libro de Excel importado" = Excel.Workbook(Navegación, null, true),
+  #"Navegación 1" = #"Libro de Excel importado"{[Item = "TablaExtrajudicial", Kind = "Table"]}[Data], 
+  
+  #"Consultas combinadas" = Table.NestedJoin(#"Navegación 1", {"Referencia Externa"}, TablaF1_, {"Referencia Externa"}, "TablaF1_", JoinKind.LeftOuter),
+  #"TablaF1_ expandido" = Table.ExpandTableColumn(#"Consultas combinadas", "TablaF1_", {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket"}, {"Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1"}),
+  #"Columnas quitadas" = Table.RemoveColumns(#"TablaF1_ expandido", {"exigible oct", "saldo en mora ", "Saldo Capital Total", "Adeudo Total", "Días Mora", "Bucket", "pagos oct", "monto cubierto ", "Cuota Más Antigua"}),
   #"Columnas reordenadas" = Table.ReorderColumns(#"Columnas quitadas", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Total Vencido", "Último Pago", "Monto Pago", "Saldo Mora", "Saldo Total Cuota Más Antigua", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
   #"Columnas con nombre cambiado" = Table.RenameColumns(#"Columnas reordenadas", {{"Total Vencido", "Exigible este mes"}}),
   #"Columnas reordenadas 1" = Table.ReorderColumns(#"Columnas con nombre cambiado", {"Asignado", "Referencia Externa", "cliente", "Inicio", "Plazo", "# de mensualidad", "Referencia bancomer", "Interbancaria finsus", "Mensualidad ", "Exigible este mes", "Saldo Mora", "Saldo Capital Total.1", "Adeudo Total.1", "Días Mora.1", "Bucket.1", "Último Pago", "Monto Pago", "Saldo Total Cuota Más Antigua", "comentarios Finsus", "gestion telefonica ", "gestion en campo "}),
